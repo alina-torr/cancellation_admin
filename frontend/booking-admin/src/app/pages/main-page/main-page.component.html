@@ -1,0 +1,110 @@
+<app-top-bar></app-top-bar>
+
+<div>
+  <label for="fileUpload" class="upload"></label>
+  <input
+    hidden
+    title=" "
+    type="file"
+    id="fileUpload"
+    accept="text/csv"
+    multiple
+    #fileInput
+    (change)="onFileSelected($event)"
+  >
+
+  <label for="fileUpload2" class="upload"></label>
+  <input
+    hidden
+    title=" "
+    type="file"
+    id="fileUpload2"
+    accept="text/csv"
+    multiple
+    #fileInput
+    (change)="onGetPredictions($event)"
+  >
+</div>
+
+<div class="table-container">
+  <table mat-table *ngIf="tableData.length" [dataSource]="tableData" class="mat-elevation-z8">
+
+    <ng-container matColumnDef="CancellationPredict">
+      <th mat-header-cell *matHeaderCellDef> CancellationPredict </th>
+      <td mat-cell *matCellDef="let element"> {{element.CancellationPredict}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="BookingId">
+      <th mat-header-cell *matHeaderCellDef> BookingId </th>
+      <td mat-cell *matCellDef="let element"> {{element.BookingId}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="ArrivalDateYear">
+      <th mat-header-cell *matHeaderCellDef> ArrivalDateYear </th>
+      <td mat-cell *matCellDef="let element"> {{element.ArrivalDateYear}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="ArrivalDateMonth">
+      <th mat-header-cell *matHeaderCellDef> ArrivalDateMonth </th>
+      <td mat-cell *matCellDef="let element"> {{element.ArrivalDateMonth}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="ArrivalDateDayOfMonth">
+      <th mat-header-cell *matHeaderCellDef> ArrivalDateDayOfMonth </th>
+      <td mat-cell *matCellDef="let element"> {{element.ArrivalDateDayOfMonth}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="StaysInWeekendNights">
+      <th mat-header-cell *matHeaderCellDef> StaysInWeekendNights </th>
+      <td mat-cell *matCellDef="let element"> {{element.StaysInWeekendNights}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="StaysInWeekNights">
+      <th mat-header-cell *matHeaderCellDef> StaysInWeekNights </th>
+      <td mat-cell *matCellDef="let element"> {{element.StaysInWeekNights}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="Adults">
+      <th mat-header-cell *matHeaderCellDef> Adults </th>
+      <td mat-cell *matCellDef="let element"> {{element.Adults}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="Children">
+      <th mat-header-cell *matHeaderCellDef> Children </th>
+      <td mat-cell *matCellDef="let element"> {{element.Children}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="Babies">
+      <th mat-header-cell *matHeaderCellDef> Babies </th>
+      <td mat-cell *matCellDef="let element"> {{element.Babies}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="Meal">
+      <th mat-header-cell *matHeaderCellDef> Meal </th>
+      <td mat-cell *matCellDef="let element"> {{element.Meal}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="RequiredCarParkingSpaces">
+      <th mat-header-cell *matHeaderCellDef> RequiredCarParkingSpaces </th>
+      <td mat-cell *matCellDef="let element"> {{element.RequiredCarParkingSpaces}} </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+</div>
+<div *ngIf="statistics">
+  <div echarts [options]="DCoptions" [merge]="DCmergeOption" class="echart"></div>
+
+  <div echarts [options]="ProfitOptions" [merge]="ProfitMergeOption" class="echart"></div>
+
+</div>
+
+
+
+
+<!-- Copyright 2024 Google LLC. All Rights Reserved.
+    Use of this source code is governed by an MIT-style license that
+    can be found in the LICENSE file at https://angular.io/license -->
+
+{{bookings?.length}}

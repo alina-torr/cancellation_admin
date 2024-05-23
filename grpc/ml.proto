@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package ml;
+option go_package = "ml/grpc";
+
+service Ml {
+  rpc GetPredictions(BookingPredictRequest) returns (IsCanceledResultResponse) {}
+  rpc TrainModel(BookingTrainRequest) returns (IsTrained) {}
+}
+
+message BookingPredictRequest {
+  repeated Booking bookings = 1;
+  int64 hotelId = 2;
+}
+
+message BookingTrainRequest {
+  repeated Booking bookings = 1;
+  repeated int64 isCanceled = 2;
+  int64 hotelId = 3;
+}
+
+message Booking {
+  int64 leadtime = 2;
+  string arrivalDateMonth = 4;
+  int64 arrivalDateWeekNumber = 5;
+  int64 arrivalDayOfMonth = 6;
+  int64 staysInWeekendNights = 7;
+  int64 staysInWeekNights = 8;
+  int64 adults = 9;
+  int64 children = 10;
+  int64 babies = 11;
+  optional string meal = 12;
+  optional string country = 13;
+  string marketSegment = 14;
+  optional string distributionChannel = 15;
+  int64 previousCancellations = 17;
+  int64 previousBookingsNotCanceled = 18;
+  string reservedRoomType = 19;
+  string assignedRoomType = 20;
+  int64 bookingChanges = 21;
+  optional string agent = 23;
+	optional string company = 24;
+	int64 daysInWaitingList = 25;
+	string customerType = 26;
+	double adr = 27;
+	int64 requiredCarParkingSpaces = 28;
+	int64 totalOfSpecialRequests = 29;
+}
+
+message IsTrained {
+  bool isTrained = 1;
+}
+
+message IsCanceledResultResponse {
+  repeated float predictions = 1;
+}
+
+message Prediction {
+  bool IsCanceled = 1;
+}

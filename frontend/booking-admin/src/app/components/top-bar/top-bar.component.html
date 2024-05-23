@@ -1,0 +1,18 @@
+<div class="top-bar">
+  <p class="name">BOOKING CANCEL</p>
+  <div class="buttons">
+
+    <button mat-flat-button (click)="navigateRegister()" *ngIf="!isLogged()">
+      Register
+    </button>
+
+    <button mat-flat-button (click)="navigateLogin()" *ngIf="!isLogged()">
+      Login
+    </button>
+
+    <button mat-icon-button title="Выйти из аккаунта" (click)="logout()" *ngIf="isLogged()">
+      <mat-icon>exit_to_app</mat-icon>
+    </button>
+
+  </div>
+</div>

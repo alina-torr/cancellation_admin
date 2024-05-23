@@ -1,0 +1,44 @@
+<app-top-bar></app-top-bar>
+<div class="container">
+  <form class="form" [formGroup]="form">
+    <div class="fields">
+      <mat-form-field appearance="outline" color="accent">
+        <mat-label>Логин</mat-label>
+        <input type="text" matInput formControlName="login">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" color="accent">
+        <mat-label>Пароль</mat-label>
+        <input type="password" matInput formControlName="password">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" color="accent">
+        <mat-label>Название отеля</mat-label>
+        <input matInput formControlName="hotelName">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" color="accent">
+        <mat-label>Страна расположения отеля</mat-label>
+        <input matInput formControlName="hotelCountry">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" color="accent">
+        <mat-label>Город расположения отеля</mat-label>
+        <input type="text" matInput formControlName="hotelCity">
+      </mat-form-field>
+
+    </div>
+    <div class="error-mes" *ngIf="errorMessage">{{errorMessage}}</div>
+    <div class="buttons">
+      <button
+        type="submit"
+        class="action-button"
+        mat-raised-button
+        color="primary"
+        (click)="register()"
+        [disabled]="isLoading"
+      >Зарегистрироваться</button>
+    </div>
+  </form>
+</div>
+
