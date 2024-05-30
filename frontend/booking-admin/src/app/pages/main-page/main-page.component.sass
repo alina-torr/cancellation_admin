@@ -8,10 +8,8 @@
 
 .upload
   font-size: 16px
-  width: 110px
+  width: 150px
   color: transparent
-
-
 
 .upload::before
   position: absolute
@@ -31,14 +29,22 @@
   top: 11px
   left: 40px
   color: #0964b0
-  content: "Upload File"
+
+.file-predict::after
+  content: "Обновить предсказания"
+
+.file-train::after
+  content: "Загрузить данные"
+
+.file-train-new::after
+  content: "Загрузить новые данные"
 
 
 .upload
   display: block
   border-radius: 4px
   padding: 0 16px
-  height: 40px
+  height: 60px
   cursor: pointer
   background-color: white
   border: 1px solid rgba(0, 0, 0, 0.16)
@@ -47,8 +53,33 @@
   transition: background-color 200ms
 
 
+.file-train
+  height: 40px
+  width: 180px
+
 .upload:hover
   background-color: #f3f4f6
 
 .upload::active
   background-color: #e5e7eb
+
+.cont-base
+  .buttons
+    display: flex
+    justify-content: flex-end
+    padding-top: 16px
+
+.new-cont
+  max-width: 1200px
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  height: 70%
+  align-self: center
+
+.text-start
+  line-height: 45px
+  font-size: 30px
+  text-align: center
+  margin-bottom: 20px

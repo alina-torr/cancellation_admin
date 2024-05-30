@@ -1,0 +1,74 @@
+.container
+  position: fixed
+  z-index: 1000
+  top: 0
+  left: 0
+  width: 100%
+  height: 100%
+
+.overlay
+  background: rgba(0, 0, 0, .32)
+  width: 100%
+  height: 100%
+
+.dialog-wrapper
+  justify-content: center
+  align-items: center
+  display: flex
+  position: absolute
+  z-index: 1000
+  top: 0
+  left: 0
+  height: 100%
+  width: 100%
+
+
+.dialog
+  background: white
+  height: 700px
+  width: 700px
+  max-height: 90%
+  max-width: 90%
+  border-radius: 10px
+  display: flex
+  align-items: center
+
+.inside
+  display: flex
+  justify-content: center
+
+.text
+  text-align: center
+  font-family: Courier, monospace
+  font-size: x-large
+  padding: 3px
+
+.loader
+  width: 50px
+  height: 50px
+  --b: 8px
+  aspect-ratio: 1
+  border-radius: 50%
+  padding: 1px
+  background: conic-gradient(#0000 10%,#548c8e) content-box
+  -webkit-mask: repeating-conic-gradient(#0000 0deg,#000 1deg 20deg,#0000 21deg 36deg), radial-gradient(farthest-side,#0000 calc(100% - var(--b) - 1px),#000 calc(100% - var(--b)))
+  -webkit-mask-composite: destination-in
+          mask-composite: intersect
+  animation: l4 1s infinite steps(10)
+
+@keyframes l4
+  to
+    transform: rotate(1turn)
+
+.close
+  position: absolute
+  float: right
+  top: 10px
+  right: 10px
+
+.hint-text
+  text-align: start
+  padding-bottom: 15px
+
+span
+  padding-left: 20px

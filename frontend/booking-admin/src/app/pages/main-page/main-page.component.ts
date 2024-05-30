@@ -1,8 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { OnInit } from '@angular/core';
 import { Component } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+import { MatTableDataSource } from '@angular/material/table';
 import { Router } from '@angular/router';
-import * as echarts from 'echarts/types/dist/echarts';
 import { EChartsOption } from 'echarts/types/dist/echarts';
 import { AuthService } from 'src/app/services/auth/auth.service';
 import { BookingService, Statistics, TableBooking } from 'src/app/services/bookings/booking.service';
@@ -10,25 +12,29 @@ import { ApiUrl } from 'src/config';
 
 @Component({
   selector: 'app-main-page',
-  // standalone: true,
   templateUrl: './main-page.component.html',
   styleUrls: ['./main-page.component.sass'],
-  // providers: [
-  //   provideEcharts(),
-  // ]
 })
 export class MainPageComponent implements OnInit {
-
+  onlyLoadForModel: boolean | undefined;
   constructor(
     private authService: AuthService,
     private bookingService: BookingService,
     private router: Router,
     private http: HttpClient,
+    public dialog: MatDialog,
   ) {
     if (!this.authService.getJwtToken()) {
       this.toLogin();
     }
+    this.bookingService.getIsThereModel().subscribe((res: boolean) => {
+      this.onlyLoadForModel = !res;
+      console.log(this.onlyLoadForModel)
+    })
   }
+
+  isLoading = false;
+  hint = false;
 
   bookings!: any[];
   statistics!: Statistics;
@@ -70,26 +76,60 @@ export class MainPageComponent implements OnInit {
       }
     ]
   };
+  yearControl!: FormControl;
+  monthControl!: FormControl;
+  dayControl!: FormControl;
 
-  tableData: TableBooking[] = [];
+  tableData!: MatTableDataSource<TableBooking>;
   displayedColumns = [
     "CancellationPredict",
     "BookingId",
     "ArrivalDateYear",
     "ArrivalDateMonth",
     "ArrivalDateDayOfMonth",
-    "StaysInWeekendNights",
-    "StaysInWeekNights",
-    "Adults",
-    "Children",
-    "Babies",
-    "Meal",
-    "RequiredCarParkingSpaces",
   ]
+
+  months = {
+    0: 'January',
+    1: 'February',
+    2: 'March',
+    3: 'April',
+    4: 'May',
+    5: 'June',
+    6: 'July',
+    7: 'August',
+    8: 'September',
+    9: 'October',
+    10: 'November',
+    11: 'December',
+  }
+
+  getMonth(i: number) {
+    return this.months[i as keyof typeof this.months];
+  }
   ngOnInit(): void {
+
     this.bookingService.getBookings().subscribe((res) => {
       if (res) {
-        this.tableData = res;
+        this.tableData = new MatTableDataSource(res);
+        const yearSet = new Set();
+
+        let minDate = new Date(res.reduce((curMin: number, d) => {
+          if (Date.parse(d.Date) < curMin) {
+            return Date.parse(`${d.ArrivalDateDayOfMonth} ${d.ArrivalDateMonth} ${d.ArrivalDateYear}`)
+          }
+          return curMin;
+        }, Date.now()))
+
+        this.yearControl = new FormControl(minDate.getFullYear());
+        this.monthControl = new FormControl(minDate.getMonth());
+        this.dayControl = new FormControl(minDate.getDate());
+        // let maxDate = res.ProfitStat.Future.CanceledProfit.concat(res.ProfitStat.Future.NotCanceledProfit).reduce((curMax: number, d) => {
+        //   if (Date.parse(d.Date) > curMax) {
+        //     return Date.parse(d.Date)
+        //   }
+        //   return curMax;
+        // }, Date.now())
       }
     });
     this.bookingService.getStatistics().subscribe((res) => {
@@ -210,9 +250,16 @@ export class MainPageComponent implements OnInit {
     if (file) {
         const formData = new FormData();
         formData.append("file", file);
+        this.isLoading = true;
         const upload$ = this.http.post(`${ApiUrl}/api/upload_data_predictions`, formData);
-        upload$.subscribe();
+        upload$.subscribe(() => {
+          this.isLoading = false;
+        });
     }
+  }
+
+  openHint() {
+    this.hint = true;
   }
 
   onFileSelected(event: any) {

@@ -1,16 +1,17 @@
+import os
 import grpc
 import ml_pb2_grpc as pb2_grpc
 import ml_pb2 as pb2
 from concurrent import futures
 
 import numpy as np
-from preprocessing import create_pipeline, handle_categorical_feature, preprocess
+from preprocessing import create_pipeline, preprocess
 import xgboost as xgb
-
 from joblib import dump, load
 import pandas as pd
 pd.set_option('display.max_columns', None)
 
+folder = "../files"
 
 class MlService(pb2_grpc.MlServicer):
 
@@ -18,21 +19,21 @@ class MlService(pb2_grpc.MlServicer):
         pass
 
     def TrainModel(self, request, context):
-        print('aaaaaaaaaaaaaaaaaaa')
+
+        savedModel = load(os.path.join(folder, f'model_{request.hotelId}.joblib'))
+
         bookings = request.bookings
         df = pd.DataFrame(data=self.toModelForm(bookings))
         predicts = pd.DataFrame(data=[c for c in request.isCanceled])
         pipeline = create_pipeline(df, predicts, request.hotelId)
-        print(pipeline)
 
         x = pipeline.transform(df)
         y = predicts
-        print(x)
         train_x = xgb.DMatrix(x, label=y)
 
         model = xgb.train({'colsample_bytree': 0.8, 'gamma': 0.1, 'learning_rate': 0.2, 'max_depth': 9, 'min_child_weight': 1, 'reg_lambda': 1.5, 'subsample': 0.9, 'objective': 'binary:logistic'}, train_x, num_boost_round=250)
-        print(model)
-        dump(model, f'model_{request.hotelId}.joblib')
+        filename = os.path.join(folder, f'model_{request.hotelId}.joblib')
+        dump(model, filename)
         return pb2.IsTrained(isTrained=True)
 
     def GetPredictions(self, request, context):
@@ -43,7 +44,7 @@ class MlService(pb2_grpc.MlServicer):
         df = pd.DataFrame(data=self.toModelForm(bookings))
         result_df = preprocess(df, hotelId)
 
-        model = load(f'model_{request.hotelId}.joblib')
+        model = load(os.path.join(folder, f'model_{request.hotelId}.joblib'))
         
         probas = model.predict(xgb.DMatrix(result_df))
         return pb2.IsCanceledResultResponse(**{"predictions": probas})
@@ -78,7 +79,10 @@ class MlService(pb2_grpc.MlServicer):
         }
 
 def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10), options = [
+        ('grpc.max_send_message_length', 1024*1024*1024),
+        ('grpc.max_receive_message_length', 1024*1024*1024)
+    ])
     pb2_grpc.add_MlServicer_to_server(MlService(), server)
     server.add_insecure_port('[::]:50051')
     server.start()

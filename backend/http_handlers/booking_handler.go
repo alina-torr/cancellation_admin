@@ -6,24 +6,21 @@ import (
 	rep "booking/repositories"
 	serv "booking/services"
 	"fmt"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gocarina/gocsv"
 	"github.com/thoas/go-funk"
+	"net/http"
 )
 
 type bookingService interface {
 	// GetAllForManager(managerId int64) ([]ent.Booking, error)
 	// Create(booking ent.BookingFields) (int64, error)
-	// CreateBookings(booking []ent.BookingFields) error
-	// GetDistributionChannel(managerId int) ([]rep.CountStatictic, error)
+	SaveBookingPredictions(booking []ent.BookingFields, predictions []float32, managerId int64) error
 	TrainModel(bookings []ent.BookingFields, cancellations []int64, managerId int64) error
+	IsThereModel(managerId int64) bool
 	GetPredictions(bss []ent.BookingFields, managerId int64) ([]float32, error)
 	GetPrediction(bss ent.BookingFields, managerId int64) (float32, error)
-	// GetProfitStatistic(managerId int64) (serv.ProfitStatistic, error)
-	// GetPrevFutureBookings(managerId int64) (prevBookings []ent.Booking, futureBookings []ent.Booking, err error)
-	// CreateBookings(booking []ent.BookingFields) error
+	GetFutureBookings(managerId int64) (futureBookings []ent.BookingTable, err error)
 }
 
 type GinBookingHandler struct {
@@ -36,37 +33,41 @@ func NewGinBookingHandler(service bookingService) *GinBookingHandler {
 	}
 }
 
-// func (uh *GinBookingHandler) GetAllBookings() gin.HandlerFunc {
+func (uh *GinBookingHandler) GetPredictionsBooking() gin.HandlerFunc {
 
-// 	return func(c *gin.Context) {
-// 		_, futureBookings, err := uh.bookingService.GetPrevFutureBookings(functions.GetUserId(c))
-// 		if err != nil {
-// 			fmt.Println(err.Error())
-// 			handleError(c, http.StatusInternalServerError, err, false)
-// 			return
-// 		}
-// 		predictions, err := uh.bookingService.GetPredictions(funk.Map(futureBookings, func(fb ent.Booking) ent.BookingFields {
-// 			return fb.BookingFields
-// 		}).([]ent.BookingFields))
-// 		if err != nil {
-// 			fmt.Println(err.Error())
-// 			handleError(c, http.StatusInternalServerError, err, false)
-// 			return
-// 		}
-// 		res := make([]ent.BookingTable, 0)
-// 		for i, b := range futureBookings {
-// 			if predictions[i] > 0.5 {
-// 				res = append(res, ent.CastBookingFieldsToTable(b.BookingFields, predictions[i]))
-// 			}
-// 		}
-// 		if err != nil {
-// 			fmt.Println(err.Error())
-// 			handleError(c, http.StatusInternalServerError, err, false)
-// 			return
-// 		}
-// 		c.JSON(http.StatusOK, res)
-// 	}
-// }
+	return func(c *gin.Context) {
+		futureBookings, err := uh.bookingService.GetFutureBookings(functions.GetUserId(c))
+		if err != nil {
+			fmt.Println(err.Error())
+			handleError(c, http.StatusInternalServerError, err, false)
+			return
+		}
+		// predictions, err := uh.bookingService.GetPredictions(funk.Map(futureBookings, func(fb ent.Booking) ent.BookingFields {
+		// 	return fb.BookingFields
+		// }).([]ent.BookingFields))
+		// if err != nil {
+		// 	fmt.Println(err.Error())
+		// 	handleError(c, http.StatusInternalServerError, err, false)
+		// 	return
+		// }
+		res := make([]ent.BookingTable, 0)
+		for _, b := range futureBookings {
+			if b.CancellationPredict > 0.5 {
+				res = append(res, b)
+			}
+		}
+		c.JSON(http.StatusOK, res)
+	}
+}
+
+func (uh *GinBookingHandler) IsThereModel() gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		id := functions.GetUserId(c)
+
+		c.JSON(http.StatusOK, uh.bookingService.IsThereModel(id))
+	}
+}
 
 func (uh *GinBookingHandler) UploadBookingPredictionFile() gin.HandlerFunc {
 
@@ -92,22 +93,17 @@ func (uh *GinBookingHandler) UploadBookingPredictionFile() gin.HandlerFunc {
 
 			id := functions.GetUserId(c)
 			res, err := uh.bookingService.GetPredictions(books, id)
-
+			print(res)
 			if err != nil {
 				fmt.Println(err)
 				handleError(c, http.StatusInternalServerError, err, false)
 			}
 
-			// _ = uh.bookingService.CreateBookings().([]ent.BookingFields))
-			for _, b := range bookings {
-				id, err := uh.bookingService.Create(ent.CastCSVtoDB(*b, 1)) // todo: add hotel id
-				if err != nil {
-					fmt.Println(err.Error())
-				} else {
-					fmt.Println(id)
-				}
+			err = uh.bookingService.SaveBookingPredictions(books, res, id)
+			if err != nil {
+				fmt.Println(err)
+				handleError(c, http.StatusInternalServerError, err, false)
 			}
-
 			c.JSON(http.StatusOK, res)
 		}
 

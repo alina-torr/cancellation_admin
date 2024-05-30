@@ -1,42 +1,99 @@
 <app-top-bar></app-top-bar>
 
-<div>
-  <label for="fileUpload" class="upload"></label>
-  <input
-    hidden
-    title=" "
-    type="file"
-    id="fileUpload"
-    accept="text/csv"
-    multiple
-    #fileInput
-    (change)="onFileSelected($event)"
-  >
 
-  <label for="fileUpload2" class="upload"></label>
+<div class="new-cont" *ngIf="onlyLoadForModel">
+  <div class="text-start">
+    Для начала работы загрузите информацию о бронированиях с известной информацией об отменах
+  </div>
+
+
+  <div>
+    <label for="fileUpload" class="upload file-train"></label>
+    <input
+      hidden
+      title=" "
+      type="file"
+      id="fileUpload"
+      accept="text/csv"
+      multiple
+      #fileInput
+      (change)="onFileSelected($event)"
+    >
+  </div>
+  <div>
+    <img
+      style="width: 30px; cursor: pointer"
+      src="/assets/question.svg"
+      (click)="openHint()"
+    >
+  </div>
+</div>
+
+
+
+<div class="cont-base" *ngIf="onlyLoadForModel !== undefined && !onlyLoadForModel">
+  <div class="buttons">
+  <div>
+    <label for="fileUpload2" class="upload file-train-new"></label>
+    <input
+      hidden
+      title=" "
+      type="file"
+      id="fileUpload2"
+      accept="text/csv"
+      multiple
+      #fileInput
+      (change)="onFileSelected($event)"
+    >
+  </div>
+
+  <label for="filePrediction" class="upload file-predict"></label>
   <input
     hidden
     title=" "
     type="file"
-    id="fileUpload2"
+    id="filePrediction"
     accept="text/csv"
     multiple
     #fileInput
     (change)="onGetPredictions($event)"
   >
-</div>
+  </div>
+
+  <div class="selects">
+
+  </div>
+<mat-form-field *ngIf="yearControl">
+  <mat-label>Select an option</mat-label>
+  <mat-select [formControl]="yearControl">
+    <mat-option value="2023">2023</mat-option>
+    <mat-option value="2024">2024</mat-option>
+  </mat-select>
+</mat-form-field>
+<mat-form-field *ngIf="monthControl">
+
+  <mat-select [formControl]="monthControl">
+    <mat-option *ngFor="let it of [].constructor(12); let i = index" [value]="i">{{getMonth(i)}}</mat-option>
+  </mat-select>
+</mat-form-field>
+<mat-form-field *ngIf="dayControl">
+
+  <mat-select [formControl]="dayControl">
+    <mat-option *ngFor="let it of [].constructor(31); let i = index" [value]="i">{{i + 1}}</mat-option>
+  </mat-select>
+</mat-form-field>
 
 <div class="table-container">
-  <table mat-table *ngIf="tableData.length" [dataSource]="tableData" class="mat-elevation-z8">
-
-    <ng-container matColumnDef="CancellationPredict">
-      <th mat-header-cell *matHeaderCellDef> CancellationPredict </th>
-      <td mat-cell *matCellDef="let element"> {{element.CancellationPredict}} </td>
-    </ng-container>
+  <table mat-table *ngIf="tableData" [dataSource]="tableData" class="mat-elevation-z8">
 
     <ng-container matColumnDef="BookingId">
       <th mat-header-cell *matHeaderCellDef> BookingId </th>
       <td mat-cell *matCellDef="let element"> {{element.BookingId}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="CancellationPredict">
+      <th mat-header-cell *matHeaderCellDef> CancellationPredict </th>
+      <td mat-cell *matCellDef="let element"> {{element.CancellationPredict}} </td>
     </ng-container>
 
     <ng-container matColumnDef="ArrivalDateYear">
@@ -54,21 +111,21 @@
       <td mat-cell *matCellDef="let element"> {{element.ArrivalDateDayOfMonth}} </td>
     </ng-container>
 
-    <ng-container matColumnDef="StaysInWeekendNights">
+    <!-- <ng-container matColumnDef="StaysInWeekendNights">
       <th mat-header-cell *matHeaderCellDef> StaysInWeekendNights </th>
       <td mat-cell *matCellDef="let element"> {{element.StaysInWeekendNights}} </td>
-    </ng-container>
-
+    </ng-container> -->
+<!--
     <ng-container matColumnDef="StaysInWeekNights">
       <th mat-header-cell *matHeaderCellDef> StaysInWeekNights </th>
       <td mat-cell *matCellDef="let element"> {{element.StaysInWeekNights}} </td>
-    </ng-container>
+    </ng-container> -->
 
-    <ng-container matColumnDef="Adults">
+    <!-- <ng-container matColumnDef="Adults">
       <th mat-header-cell *matHeaderCellDef> Adults </th>
       <td mat-cell *matCellDef="let element"> {{element.Adults}} </td>
-    </ng-container>
-
+    </ng-container> -->
+<!--
     <ng-container matColumnDef="Children">
       <th mat-header-cell *matHeaderCellDef> Children </th>
       <td mat-cell *matCellDef="let element"> {{element.Children}} </td>
@@ -77,9 +134,9 @@
     <ng-container matColumnDef="Babies">
       <th mat-header-cell *matHeaderCellDef> Babies </th>
       <td mat-cell *matCellDef="let element"> {{element.Babies}} </td>
-    </ng-container>
+    </ng-container> -->
 
-    <ng-container matColumnDef="Meal">
+    <!-- <ng-container matColumnDef="Meal">
       <th mat-header-cell *matHeaderCellDef> Meal </th>
       <td mat-cell *matCellDef="let element"> {{element.Meal}} </td>
     </ng-container>
@@ -87,7 +144,7 @@
     <ng-container matColumnDef="RequiredCarParkingSpaces">
       <th mat-header-cell *matHeaderCellDef> RequiredCarParkingSpaces </th>
       <td mat-cell *matCellDef="let element"> {{element.RequiredCarParkingSpaces}} </td>
-    </ng-container>
+    </ng-container> -->
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
@@ -100,11 +157,7 @@
 
 </div>
 
-
-
-
-<!-- Copyright 2024 Google LLC. All Rights Reserved.
-    Use of this source code is governed by an MIT-style license that
-    can be found in the LICENSE file at https://angular.io/license -->
-
+</div>
+<app-loading-dialog *ngIf="isLoading"></app-loading-dialog>
+<app-format-hint (close)="hint=false" *ngIf="hint"></app-format-hint>
 {{bookings?.length}}

@@ -4,7 +4,6 @@ import (
 	ent "booking/entities"
 	"context"
 	"fmt"
-	"math"
 
 	// "fmt"
 
@@ -160,9 +159,48 @@ func NewBookingRepository(dbpool *pgxpool.Pool) *BookingRepository {
 // 	return nil
 // }
 
-func (br BookingRepository) GetAllForManager(managerId int64) ([]ent.Booking, error) {
-	res, err := getArrayQuery[ent.Booking](br.dbpool,
-		`select b.* from userscheme.manager m 
+func (br BookingRepository) SaveBookingPredictions(bookings []ent.BookingFields, predictions []float32, hotelId int64) error {
+	tx, err := br.dbpool.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(context.Background())
+
+	for i, b := range bookings {
+		var bookingId int64
+		err := tx.QueryRow(context.Background(),
+			`INSERT INTO bookingscheme.booking (`+
+				`hotel_id, booking_id, arrival_date_year, arrival_date_month, arrival_date_day_of_month, cancel_prediction`+
+				`) VALUES (`+
+				`$1, $2, $3, $4, $5, $6`+
+				`) RETURNING id`,
+			hotelId,
+			b.BookingId,
+			b.ArrivalDateYear,
+			b.ArrivalDateMonth,
+			b.ArrivalDateDayOfMonth,
+			predictions[i],
+		).Scan(&bookingId)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (br BookingRepository) GetAllForManager(managerId int64) ([]ent.BookingTable, error) {
+	res, err := getArrayQuery[ent.BookingTable](br.dbpool,
+		`select b.cancel_prediction, b.booking_id, b.arrival_date_year, b.arrival_date_month, b.arrival_date_day_of_month from userscheme.manager m 
 			join hotelscheme.hotel h on m.hotel_id = h.id 
 			join bookingscheme.booking b on h.id = b.hotel_id 
 		where m.id = $1;`, managerId)
@@ -183,8 +221,8 @@ func (br BookingRepository) GetDistributionChannel(managerId int64) ([]CountStat
 func (br BookingRepository) TrainModel(bookings []ent.BookingFields, cancellations []int64, hotelId int64) error {
 	conn, err := grpc.Dial("localhost:50051",
 		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(1024*1024*32),
-			grpc.MaxCallSendMsgSize(math.MaxInt64),
+			grpc.MaxCallRecvMsgSize(1024*1024*1024),
+			grpc.MaxCallSendMsgSize(1024*1024*1024),
 		),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
@@ -208,8 +246,8 @@ func (br BookingRepository) TrainModel(bookings []ent.BookingFields, cancellatio
 func (br BookingRepository) GetPredictions(bs []ent.BookingFields, hotelId int64) ([]float32, error) {
 	conn, err := grpc.Dial("localhost:50051",
 		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(1024*1024*32),
-			grpc.MaxCallSendMsgSize(math.MaxInt64),
+			grpc.MaxCallRecvMsgSize(1024*1024*1024),
+			grpc.MaxCallSendMsgSize(1024*1024*1024),
 		),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)

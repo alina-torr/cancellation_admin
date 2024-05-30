@@ -2,7 +2,9 @@ package services
 
 import (
 	ent "booking/entities"
-	rep "booking/repositories"
+	"os"
+
+	// rep "booking/repositories"
 	"fmt"
 	// "sort"
 	"strconv"
@@ -14,6 +16,8 @@ import (
 	// "os/exec"
 	// "time"
 	mlgrpc "booking/ml/grpc"
+
+	"github.com/thoas/go-funk"
 	// "github.com/mitchellh/mapstructure"
 	// "github.com/thoas/go-funk"
 )
@@ -21,8 +25,9 @@ import (
 type bookingRepository interface {
 	// Create(booking ent.BookingFields) (int64, error)
 	// CreateBookings(bs []ent.BookingFields) error
-	GetAllForManager(managerId int64) ([]ent.Booking, error)
-	GetDistributionChannel(managerId int64) ([]rep.CountStatictic, error)
+	GetAllForManager(managerId int64) ([]ent.BookingTable, error)
+	// GetDistributionChannel(managerId int64) ([]rep.CountStatictic, error)
+	SaveBookingPredictions(booking []ent.BookingFields, predictions []float32, hotelId int64) error
 	GetPredictions(bs []ent.BookingFields, hotelId int64) ([]float32, error)
 	TrainModel(bookings []ent.BookingFields, cancellations []int64, hotelId int64) error
 }
@@ -58,9 +63,24 @@ func (bs BookingService) GetPredicts(bookings []*mlgrpc.Booking) {
 	fmt.Println(res)
 }
 
-// func (bs BookingService) CreateBookings(bss []ent.BookingFields) error {
-// 	return bs.bookingRepository.CreateBookings(bss)
-// }
+func (bs BookingService) IsThereModel(managerId int64) bool {
+	m, err := bs.userRepository.GetManagerById(managerId)
+	if err != nil {
+		return false
+	}
+	if _, err := os.Stat(fmt.Sprintf("../../files/model_%d.joblib", m.HotelId)); err == nil {
+		return true
+	}
+	return false
+}
+
+func (bs BookingService) SaveBookingPredictions(booking []ent.BookingFields, predictions []float32, managerId int64) error {
+	m, err := bs.userRepository.GetManagerById(managerId)
+	if err != nil {
+		return err
+	}
+	return bs.bookingRepository.SaveBookingPredictions(booking, predictions, m.HotelId)
+}
 
 func (bs BookingService) GetPredictions(bss []ent.BookingFields, managerId int64) ([]float32, error) {
 	m, err := bs.userRepository.GetManagerById(managerId)
@@ -78,11 +98,11 @@ func (bs BookingService) GetPrediction(bss ent.BookingFields, managerId int64) (
 	return res[0], nil
 }
 
-func (bs BookingService) dateToString(b ent.Booking) string {
+func (bs BookingService) dateToString(b ent.BookingTable) string {
 	return strings.Join([]string{strconv.FormatInt(b.ArrivalDateDayOfMonth, 10), b.ArrivalDateMonth, strconv.Itoa(int(b.ArrivalDateYear))}, " ")
 }
 
-func (bs BookingService) getDate(b ent.Booking) (time.Time, error) {
+func (bs BookingService) getDate(b ent.BookingTable) (time.Time, error) {
 	date, err := time.Parse("2 January 2006", bs.dateToString(b))
 	return date, err
 }
@@ -101,30 +121,33 @@ func (bs BookingService) TrainModel(bookings []ent.BookingFields, ys []int64, ma
 	return bs.bookingRepository.TrainModel(bookings, ys, m.HotelId)
 }
 
-// func (bs BookingService) GetPrevFutureBookings(managerId int) (prevBookings []ent.Booking, futureBookings []ent.Booking, err error) {
-// 	bookings, err := bs.bookingRepository.GetAllForManager(managerId)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return make([]ent.Booking, 0), make([]ent.Booking, 0), err
-// 	}
-// 	arrivalDates := (funk.Map(bookings, func(b ent.Booking) time.Time {
-// 		date, _ := bs.getDate(b)
-// 		return date
-// 	})).([]time.Time)
-// 	for i, b := range bookings {
-// 		arrivalDate := arrivalDates[i]
-// 		isAfter := arrivalDate.Compare(time.Now())
-// 		if isAfter == -1 || isAfter == 0 {
-// 			prevBookings = append(prevBookings, b)
-// 		} else {
-// 			futureBookings = append(futureBookings, b)
-// 		}
-// 	}
-// 	if err != nil {
-// 		return make([]ent.Booking, 0), make([]ent.Booking, 0), err
-// 	}
-// 	return prevBookings, futureBookings, nil
-// }
+func (bs BookingService) GetFutureBookings(managerId int64) (futureBookings []ent.BookingTable, err error) {
+	bookings, err := bs.bookingRepository.GetAllForManager(managerId)
+	if err != nil {
+		fmt.Println(err)
+		return make([]ent.BookingTable, 0), err
+	}
+	arrivalDates := (funk.Map(bookings, func(b ent.BookingTable) time.Time {
+		date, _ := bs.getDate(b)
+		return date
+	})).([]time.Time)
+	for i, b := range bookings {
+		arrivalDate := arrivalDates[i]
+		isAfter := arrivalDate.Compare(time.Now())
+		// if isAfter == -1 || isAfter == 0 {
+		// 	prevBookings = append(prevBookings, b)
+		// } else {
+		// 	futureBookings = append(futureBookings, b)
+		// }
+		if isAfter != -1 && isAfter != 0 {
+			futureBookings = append(futureBookings, b)
+		}
+	}
+	if err != nil {
+		return make([]ent.BookingTable, 0), err
+	}
+	return futureBookings, nil
+}
 
 // func (bs BookingService) GetProfitStatistic(managerId int) (ProfitStatistic, error) {
 // prevBookings, futureBookings, err := bs.GetPrevFutureBookings(managerId)

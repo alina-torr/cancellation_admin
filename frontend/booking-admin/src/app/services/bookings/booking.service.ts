@@ -16,11 +16,15 @@ export class BookingService {
   ) { }
 
   getBookings(): Observable<any[] | null> {
-    return this.http.get<any[]>(`${ApiUrl}/api/bookings`).pipe(
+    return this.http.get<any[]>(`${ApiUrl}/api/get_predictions`).pipe(
       catchError((error: HttpErrorResponse) => {
         return of(null);
       }),
     )
+  }
+
+  getIsThereModel(): Observable<boolean> {
+    return this.http.get<boolean>(`${ApiUrl}/api/is_there_model`);
   }
 
   getStatistics(): Observable<Statistics | null> {

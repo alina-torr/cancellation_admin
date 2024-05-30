@@ -14,6 +14,11 @@ import { MainPageComponent } from './pages/main-page/main-page.component';
 import {MatTableModule} from '@angular/material/table';
 import { RegisterPageComponent } from './pages/register-page/register-page.component';
 import { TopBarComponent } from './components/top-bar/top-bar.component';
+import {MatDialogModule} from '@angular/material/dialog';
+import { LoadingDialogComponent } from './components/loading-dialog/loading-dialog.component';
+import { FormatHintComponent } from './components/format-hint/format-hint.component';
+import {MatSelectModule} from '@angular/material/select';
+import {MatFormFieldModule} from '@angular/material/form-field';
 
 @NgModule({
   declarations: [
@@ -22,6 +27,8 @@ import { TopBarComponent } from './components/top-bar/top-bar.component';
     RegisterPageComponent,
     MainPageComponent,
     TopBarComponent,
+    LoadingDialogComponent,
+    FormatHintComponent,
   ],
   imports: [
     BrowserModule,
@@ -30,10 +37,13 @@ import { TopBarComponent } from './components/top-bar/top-bar.component';
     SharedMaterialModule,
     ReactiveFormsModule,
     HttpClientModule,
+    MatDialogModule,
     NgxEchartsModule.forRoot({
       echarts: () => import('echarts'),
     }),
     MatTableModule,
+    MatFormFieldModule,
+    MatSelectModule,
   ],
   providers: [
     {

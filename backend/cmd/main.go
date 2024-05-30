@@ -44,8 +44,10 @@ func main() {
 
 	api := r.Group("/api")
 	api.Use(middleware.TokenAuthMiddleware(*userService))
+	api.GET("/is_there_model", bookingHandler.IsThereModel())
 	api.POST("/upload_data", bookingHandler.UploadBookingFile())
 	api.POST("/upload_data_predictions", bookingHandler.UploadBookingPredictionFile())
+	api.GET("/get_predictions", bookingHandler.GetPredictionsBooking())
 	// todo: дообучить модель
 	// api.GET("/bookings", bookingHandler.GetAllBookings())
 	// api.GET("/statistics", bookingHandler.GetStatictic())
