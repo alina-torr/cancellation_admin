@@ -5,7 +5,7 @@ import ml_pb2 as pb2
 from concurrent import futures
 
 import numpy as np
-from preprocessing import create_pipeline, preprocess
+from preprocessing import create_pipeline, preprocess, remove_incorrect_data
 import xgboost as xgb
 from joblib import dump, load
 import pandas as pd
@@ -19,19 +19,33 @@ class MlService(pb2_grpc.MlServicer):
         pass
 
     def TrainModel(self, request, context):
-
-        savedModel = load(os.path.join(folder, f'model_{request.hotelId}.joblib'))
-
+        is_model_exists = os.path.isfile(os.path.join(folder, f'model_{request.hotelId}.joblib'))
+        saved_model = None if (not is_model_exists) else load(os.path.join(folder, f'model_{request.hotelId}.joblib'))
         bookings = request.bookings
         df = pd.DataFrame(data=self.toModelForm(bookings))
-        predicts = pd.DataFrame(data=[c for c in request.isCanceled])
+        predicts = pd.DataFrame(data={'is_canceled': [c for c in request.isCanceled]})
+
+        full_df = pd.concat([df, predicts], axis=1)
+        print(full_df.shape[0])
+        full_df = remove_incorrect_data(full_df)
+        print(full_df.shape[0])
+        df = full_df.loc[:, full_df.columns != 'is_canceled']
+        predicts = full_df.loc[:, full_df.columns == 'is_canceled']
+
         pipeline = create_pipeline(df, predicts, request.hotelId)
 
         x = pipeline.transform(df)
         y = predicts
         train_x = xgb.DMatrix(x, label=y)
 
-        model = xgb.train({'colsample_bytree': 0.8, 'gamma': 0.1, 'learning_rate': 0.2, 'max_depth': 9, 'min_child_weight': 1, 'reg_lambda': 1.5, 'subsample': 0.9, 'objective': 'binary:logistic'}, train_x, num_boost_round=250)
+        model = xgb.train({'colsample_bytree': 0.8, 
+                           'gamma': 0.1, 
+                           'learning_rate': 0.2,
+                            'max_depth': 9, 
+                            'min_child_weight': 1, 
+                            'reg_lambda': 1.5, 
+                            'subsample': 0.9, 
+                            'objective': 'binary:logistic'}, train_x, num_boost_round=250, xgb_model = saved_model)
         filename = os.path.join(folder, f'model_{request.hotelId}.joblib')
         dump(model, filename)
         return pb2.IsTrained(isTrained=True)

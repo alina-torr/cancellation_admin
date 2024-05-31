@@ -7,7 +7,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { Router } from '@angular/router';
 import { EChartsOption } from 'echarts/types/dist/echarts';
 import { AuthService } from 'src/app/services/auth/auth.service';
-import { BookingService, Statistics, TableBooking } from 'src/app/services/bookings/booking.service';
+import { BookingService, TableBooking } from 'src/app/services/bookings/booking.service';
 import { ApiUrl } from 'src/config';
 
 @Component({
@@ -29,64 +29,28 @@ export class MainPageComponent implements OnInit {
     }
     this.bookingService.getIsThereModel().subscribe((res: boolean) => {
       this.onlyLoadForModel = !res;
-      console.log(this.onlyLoadForModel)
+      if (res) this.getBookings();
     })
   }
 
   isLoading = false;
+  isError = false;
   hint = false;
 
   bookings!: any[];
-  statistics!: Statistics;
-  DCmergeOption: any;
-  ProfitMergeOption: any;
 
-  DCoptions: EChartsOption = {
-    tooltip: {
-      trigger: 'item',
-      formatter: '{a} <br/>{b} : {c} ({d}%)',
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'left',
-      data: ['USA', 'Germany', 'France', 'Canada', 'Russia'],
-
-    },
-    series: [
-      {
-        name: 'Distribution Channel',
-        type: 'pie',
-        radius: '80%',
-        center: ['50%', '50%'],
-      },
-    ],
-  };
-
-
-  ProfitOptions: EChartsOption = {
-    xAxis: {
-      data: ['A', 'B', 'C', 'D', 'E']
-    },
-    yAxis: {},
-    series: [
-      {
-        data: [10, 22, 28, 23, 19],
-        type: 'line',
-        smooth: true
-      }
-    ]
-  };
   yearControl!: FormControl;
   monthControl!: FormControl;
   dayControl!: FormControl;
 
   tableData!: MatTableDataSource<TableBooking>;
   displayedColumns = [
-    "CancellationPredict",
     "BookingId",
     "ArrivalDateYear",
     "ArrivalDateMonth",
     "ArrivalDateDayOfMonth",
+    "CancellationPredict",
+    "AddInfo"
   ]
 
   months = {
@@ -104,139 +68,74 @@ export class MainPageComponent implements OnInit {
     11: 'December',
   }
 
+  years: any[] = [];
+
   getMonth(i: number) {
     return this.months[i as keyof typeof this.months];
   }
-  ngOnInit(): void {
 
+  nestedRes: any = {};
+
+  ngOnInit(): void {
+    this.getBookings();
+  }
+  isDataReady = false;
+  getBookings() {
+    this.isLoading = true;
     this.bookingService.getBookings().subscribe((res) => {
       if (res) {
         this.tableData = new MatTableDataSource(res);
+        this.isDataReady = true;
         const yearSet = new Set();
-
+        let date = new Date();
+        date.setDate(date.getDate() + 365);
         let minDate = new Date(res.reduce((curMin: number, d) => {
-          if (Date.parse(d.Date) < curMin) {
+          yearSet.add(d.ArrivalDateYear)
+          if (!this.nestedRes[d.ArrivalDateYear]) {
+            this.nestedRes[d.ArrivalDateYear] = {};
+          }
+          if (!this.nestedRes[d.ArrivalDateYear][d.ArrivalDateMonth]) {
+            this.nestedRes[d.ArrivalDateYear][d.ArrivalDateMonth] = {};
+          }
+          if (!this.nestedRes[d.ArrivalDateYear][d.ArrivalDateMonth][d.ArrivalDateDayOfMonth]) {
+            this.nestedRes[d.ArrivalDateYear][d.ArrivalDateMonth][d.ArrivalDateDayOfMonth] = [];
+          }
+          this.nestedRes[d.ArrivalDateYear][d.ArrivalDateMonth][d.ArrivalDateDayOfMonth].push(d);
+          if (Date.parse(`${d.ArrivalDateDayOfMonth} ${d.ArrivalDateMonth} ${d.ArrivalDateYear}`) < curMin) {
             return Date.parse(`${d.ArrivalDateDayOfMonth} ${d.ArrivalDateMonth} ${d.ArrivalDateYear}`)
           }
           return curMin;
-        }, Date.now()))
-
+        }, date.getTime()))
+        this.years = Array.from(yearSet)
         this.yearControl = new FormControl(minDate.getFullYear());
         this.monthControl = new FormControl(minDate.getMonth());
-        this.dayControl = new FormControl(minDate.getDate());
-        // let maxDate = res.ProfitStat.Future.CanceledProfit.concat(res.ProfitStat.Future.NotCanceledProfit).reduce((curMax: number, d) => {
-        //   if (Date.parse(d.Date) > curMax) {
-        //     return Date.parse(d.Date)
-        //   }
-        //   return curMax;
-        // }, Date.now())
-      }
-    });
-    this.bookingService.getStatistics().subscribe((res) => {
-      if (res) {
-        this.statistics = res;
-        this.DCmergeOption = {
-          series: [
-            { data: res.DistributionChannel.map((v) => ({
-                value: v.Count,
-                name: v.Value,
-              }))
-            },
-          ],
-          legend: {
-            orient: 'vertical',
-            left: 'left',
-            data: res.DistributionChannel.map((v) => v.Value),
-          },
-        };
-        console.log(res.ProfitStat.Prev)
+        this.dayControl = new FormControl(minDate.getDate() - 1);
 
-        let minDate = res.ProfitStat.Prev.Profit.reduce((curMin: number, d) => {
-          if (Date.parse(d.Date) < curMin) {
-            return Date.parse(d.Date)
-          }
-          return curMin;
-        }, Date.now())
-        let maxDate = res.ProfitStat.Future.CanceledProfit.concat(res.ProfitStat.Future.NotCanceledProfit).reduce((curMax: number, d) => {
-          if (Date.parse(d.Date) > curMax) {
-            return Date.parse(d.Date)
-          }
-          return curMax;
-        }, Date.now())
 
-        let daysOfYear = [];
-        let prev = [];
-        let futureCanceled = [];
-        let futureNotCanceled = [];
-        for (var d = new Date(minDate); d <= new Date(maxDate); d.setDate(d.getDate() + 1)) {
-            let k = new Date(d);
-            daysOfYear.push(`${k.getDate()}.${k.getMonth()+1}.${k.getFullYear()}`);
-            const month = {
-              0: 'January',
-              1: 'February',
-              2: 'March',
-              3: 'April',
-              4: 'May',
-              5: 'June',
-              6: 'July',
-              7: 'August',
-              8: 'September',
-              9: 'October',
-              10: 'November',
-              11: 'December',
-            }
-            prev.push(res.ProfitStat.Prev.Profit.find((el) => {
-              let mn = k.getMonth() as keyof typeof month
-              return el.Date == `${k.getDate()} ${month[mn]} ${k.getFullYear()}`
-            })?.Value)
-            futureCanceled.push(res.ProfitStat.Future.CanceledProfit.find((el) => {
-              let mn = k.getMonth() as keyof typeof month
-              return el.Date == `${k.getDate()} ${month[mn]} ${k.getFullYear()}`
-            })?.Value)
-            futureNotCanceled.push(res.ProfitStat.Future.NotCanceledProfit.find((el) => {
-              let mn = k.getMonth() as keyof typeof month
-              return el.Date == `${k.getDate()} ${month[mn]} ${k.getFullYear()}`
-            })?.Value)
+        const getFiltered = () => {
+          let d = {
+            ArrivalDateYear: this.yearControl.value,
+            ArrivalDateMonth: this.months[this.monthControl.value as keyof typeof this.months],
+            ArrivalDateDayOfMonth: this.dayControl.value + 1,
+          }
+          if (this.nestedRes[d.ArrivalDateYear] && this.nestedRes[d.ArrivalDateYear][d.ArrivalDateMonth] && this.nestedRes[d.ArrivalDateYear][d.ArrivalDateMonth][d.ArrivalDateDayOfMonth]) {
+            return (this.nestedRes[d.ArrivalDateYear][d.ArrivalDateMonth][d.ArrivalDateDayOfMonth])
+          }
+          return [];
         }
-        console.log(daysOfYear)
-        console.log(futureCanceled)
-        console.log(futureNotCanceled)
-        this.ProfitMergeOption = {
-          xAxis: {
-            data: daysOfYear
-          },
-          // series: [
-          //   {
-          //     data: futureCanceled
-          //   },
-          //   {
-          //     data: prev
-          //   },
-          //   {
-          //     data: futureNotCanceled
-          //   },
-          // ],
-          series: [
-            {
-              name: 'Email',
-              type: 'line',
-              stack: 'Total',
-              data: prev
-            },
-            {
-              name: 'Union Ads',
-              type: 'line',
-              stack: 'Total',
-              data: futureCanceled
-            },
-            {
-              name: 'Video Ads',
-              type: 'line',
-              stack: 'Total',
-              data: futureNotCanceled
-            },
-          ]
-        };
+
+        this.tableData = new MatTableDataSource(getFiltered());
+
+        this.yearControl.valueChanges.subscribe(() => {
+          this.tableData.data = getFiltered();
+        })
+        this.monthControl.valueChanges.subscribe(() => {
+          this.tableData.data = getFiltered();
+        })
+        this.dayControl.valueChanges.subscribe(() => {
+          this.tableData.data = getFiltered();
+        })
+        this.isLoading = false;
       }
     });
   }
@@ -253,7 +152,11 @@ export class MainPageComponent implements OnInit {
         this.isLoading = true;
         const upload$ = this.http.post(`${ApiUrl}/api/upload_data_predictions`, formData);
         upload$.subscribe(() => {
+          this.getBookings();
+        },
+        (error) => {
           this.isLoading = false;
+          this.isError = true;
         });
     }
   }
@@ -262,13 +165,24 @@ export class MainPageComponent implements OnInit {
     this.hint = true;
   }
 
-  onFileSelected(event: any) {
+  onFileSelected(event: any, isStart = false) {
     const file: File = event.target.files[0];
     if (file) {
         const formData = new FormData();
         formData.append("file", file);
         const upload$ = this.http.post(`${ApiUrl}/api/upload_data`, formData);
-        upload$.subscribe();
+        this.isLoading = true;
+        upload$.subscribe(() => {
+          this.isLoading = false;
+          if (isStart) {
+            this.router.navigateByUrl('/', {skipLocationChange: true}).then(() => {
+              this.router.navigate(['/main']);
+          });
+          }
+        }, (error) => {
+          this.isLoading = false;
+          this.isError = true;
+        });
     }
   }
 

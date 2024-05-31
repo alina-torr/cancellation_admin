@@ -12,7 +12,6 @@ export class BookingService {
 
   constructor(
     private http: HttpClient,
-    // private errorService: ErrorService,
   ) { }
 
   getBookings(): Observable<any[] | null> {
@@ -27,37 +26,6 @@ export class BookingService {
     return this.http.get<boolean>(`${ApiUrl}/api/is_there_model`);
   }
 
-  getStatistics(): Observable<Statistics | null> {
-    return this.http.get<Statistics>(`${ApiUrl}/api/statistics`).pipe(
-      catchError((error: HttpErrorResponse) => {
-        return of(null);
-      }),
-    )
-  }
-}
-
-export interface Statistics {
-  DistributionChannel: ValueCount[];
-  ProfitStat: {
-    Future: {
-      CanceledProfit: any[];
-      NotCanceledProfit: any[];
-    };
-    Prev: {
-      Profit: DateCount[];
-    };
-  }
-
-};
-
-interface ValueCount {
-  Count: number;
-  Value: string;
-}
-
-interface DateCount {
-  Date: string;
-  Value: number;
 }
 
 export interface TableBooking {
@@ -66,11 +34,4 @@ export interface TableBooking {
   ArrivalDateYear: number
   ArrivalDateMonth: string
   ArrivalDateDayOfMonth: number
-  StaysInWeekendNights: number
-  StaysInWeekNights: number
-  Adults: number
-  Children: number
-  Babies: number
-  Meal: string
-  RequiredCarParkingSpaces: number
 }

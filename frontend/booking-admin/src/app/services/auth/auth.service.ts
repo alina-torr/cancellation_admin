@@ -4,6 +4,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, of } from 'rxjs';
 import { ApiUrl } from 'src/config';
 import { Router } from '@angular/router';
+import { jwtDecode } from "jwt-decode";
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,6 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private router: Router,
-    // private errorService: ErrorService,
   ) {
     let jwt = localStorage.getItem('jwt');
     if (jwt) {
@@ -29,6 +29,12 @@ export class AuthService {
   }
 
   getJwtToken(): string | undefined {
+    if (this.jwtToken) {
+      let d = jwtDecode(this.jwtToken);
+      if (d.exp && new Date(d.exp * 1000).getTime() < Date.now()) {
+        return undefined;
+      }
+    }
     return this.jwtToken;
   }
 

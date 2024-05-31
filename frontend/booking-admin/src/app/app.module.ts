@@ -9,7 +9,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
 import { JwtAuthInterceptor } from './services/auth/middleware/jwt-middleware';
-import { NgxEchartsModule, provideEcharts } from 'ngx-echarts';
+import { NgxEchartsModule } from 'ngx-echarts';
 import { MainPageComponent } from './pages/main-page/main-page.component';
 import {MatTableModule} from '@angular/material/table';
 import { RegisterPageComponent } from './pages/register-page/register-page.component';
@@ -19,6 +19,7 @@ import { LoadingDialogComponent } from './components/loading-dialog/loading-dial
 import { FormatHintComponent } from './components/format-hint/format-hint.component';
 import {MatSelectModule} from '@angular/material/select';
 import {MatFormFieldModule} from '@angular/material/form-field';
+import { ErrorComponent } from './components/error/error.component';
 
 @NgModule({
   declarations: [
@@ -29,6 +30,7 @@ import {MatFormFieldModule} from '@angular/material/form-field';
     TopBarComponent,
     LoadingDialogComponent,
     FormatHintComponent,
+    ErrorComponent,
   ],
   imports: [
     BrowserModule,

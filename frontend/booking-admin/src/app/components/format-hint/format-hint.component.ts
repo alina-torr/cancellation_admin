@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Inject, Output } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
@@ -7,5 +7,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
   styleUrls: ['./format-hint.component.sass']
 })
 export class FormatHintComponent {
+  @Input() isCanceled = true;
+  @Input() isAdd = true;
   @Output() close = new EventEmitter();
 }

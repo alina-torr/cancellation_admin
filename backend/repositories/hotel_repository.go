@@ -3,8 +3,9 @@ package repositories
 import (
 	ent "booking/entities"
 	"context"
+	"fmt"
+	"math/rand"
 
-	// "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -28,13 +29,15 @@ func (hr HotelRepository) Create(hotel ent.HotelFields) (int64, error) {
 		return -1, err
 	}
 	defer tx.Rollback(context.Background())
-
+	key, err := GenerateRandomString(48)
+	fmt.Println(key)
 	var hotelId int64
 	err = tx.QueryRow(context.Background(),
-		`INSERT INTO hotelscheme.hotel (name, country, city)
-			VALUES ($1, $2, $3) RETURNING id`, hotel.Name, hotel.Country, hotel.City).Scan(&hotelId)
+		`INSERT INTO hotelscheme.hotel (name, country, city, api_key)
+			VALUES ($1, $2, $3, $4) RETURNING id`, hotel.Name, hotel.Country, hotel.City, key).Scan(&hotelId)
 
 	if err != nil {
+		fmt.Println(err)
 		return -1, err
 	}
 
@@ -45,25 +48,13 @@ func (hr HotelRepository) Create(hotel ent.HotelFields) (int64, error) {
 	return hotelId, nil
 }
 
-func (hr HotelRepository) CreateRoom(room ent.RoomFields) (int64, error) {
-	tx, err := hr.dbpool.Begin(context.Background())
-	if err != nil {
-		return -1, err
-	}
-	defer tx.Rollback(context.Background())
-
-	var roomId int64
-	err = tx.QueryRow(context.Background(),
-		`INSERT INTO hotelscheme.room (hotel_id, price)
-			VALUES ($1, $2) RETURNING id`, room.Hotel_id, room.Price).Scan(&roomId)
-
-	if err != nil {
-		return -1, err
+func GenerateRandomString(n int) (string, error) {
+	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	ret := make([]byte, n)
+	for i := 0; i < n; i++ {
+		num := rand.Intn(len(letters))
+		ret[i] = letters[num]
 	}
 
-	err = tx.Commit(context.Background())
-	if err != nil {
-		return -1, err
-	}
-	return roomId, nil
+	return string(ret), nil
 }

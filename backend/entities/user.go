@@ -1,19 +1,5 @@
 package entities
 
-type Client struct {
-	Id int64 `db:"id"`
-	ClientRegister
-}
-
-type ClientRegister struct {
-	Phone_number string `db:"phone_number"`
-	Email        string `db:"email"`
-	First_name   string `db:"first_name"`
-	Last_name    string `db:"last_name"`
-	Middle_name  string `db:"middle_name"`
-	Country      string `db:"country"`
-}
-
 type Manager struct {
 	Id      int64 `db:"id"`
 	HotelId int64 `db:"hotel_id"`

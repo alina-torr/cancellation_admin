@@ -2,8 +2,11 @@ package main
 
 import (
 	ent "booking/entities"
+	"fmt"
 	"log"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/gocarina/gocsv"
 )
@@ -29,8 +32,8 @@ func ReadCsvFile(filePath string) []*CSV_SOURCE {
 }
 
 type CSV_SOURCE struct {
-	BookingId int64  `csv:"booking_id"`
-	Hotel     string `csv:"hotel"`
+	// BookingId int64  `csv:"booking_id"`
+	Hotel string `csv:"hotel"`
 	ent.TrainBooking
 }
 
@@ -41,6 +44,24 @@ func splitHotels() {
 	id := int64(1)
 	for _, b := range bookings {
 		b.BookingId = id
+		rand.Seed(time.Now().Unix())
+		names := []string{
+			"Михаил",
+			"Кирилл",
+			"Василиса",
+			"Анатолий",
+			"Екатерина",
+		}
+		numbers := []string{
+			"+7(922)111-05-00",
+			"+7(351)240-04-40",
+			"+7(495)755-69-83",
+			"+7(904)135-23-77",
+			"+7(951)705-30-03",
+		}
+		name := names[rand.Intn(len(names))]
+		number := numbers[rand.Intn(len(numbers))]
+		b.AddInfo = fmt.Sprintf("%s, %s", name, number)
 		id++
 		b.ArrivalDateYear = b.ArrivalDateYear + 8
 		if b.Hotel == "Resort Hotel" {
@@ -51,11 +72,11 @@ func splitHotels() {
 		}
 	}
 
-	fileResort, err := os.Create("resort-hotel.csv")
+	fileResort, err := os.Create("resort-hotel-add-info.csv")
 	if err != nil {
 		panic(err)
 	}
-	fileCity, err := os.Create("city-hotel.csv")
+	fileCity, err := os.Create("city-hotel-add-info.csv")
 	if err != nil {
 		panic(err)
 	}

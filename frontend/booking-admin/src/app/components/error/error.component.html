@@ -1,0 +1,18 @@
+<div class="container">
+  <div class="overlay"></div>
+  <div class="dialog-wrapper">
+    <div class="dialog" style="position: absolute;">
+      <div class="inside">
+        <div style="cursor: pointer;" class="close" (click)="close.emit()">
+          <button mat-icon-button aria-label="close dialog" mat-dialog-close>
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div style="display: flex; flex-direction: column; padding-left: 25px; padding-right: 25px;">
+          <div class="text">Произошла ошибка</div>
+            <div class="text">Проверьте загружаемые данные</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

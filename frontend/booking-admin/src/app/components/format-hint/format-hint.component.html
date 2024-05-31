@@ -11,33 +11,34 @@
         <div style="display: flex; flex-direction: column; padding-left: 25px;">
           <div class="text hint-text">Формат: csv файл</div>
           <div class="text hint-text">Поля: </div>
-          <span>is_canceled: </span>
-          <span>booking_id: </span>
-          <span>lead_time: </span>
-          <span>arrival_date_year: </span>
-          <span>arrival_date_month: </span>
-          <span>arrival_date_week_number: </span>
-          <span>arrival_date_day_of_month: </span>
-          <span>stays_in_weekend_nights: </span>
-          <span>stays_in_week_nights: </span>
-          <span>adults: </span>
-          <span>children: </span>
-          <span>babies: </span>
-          <span>meal: </span>
-          <span>country: </span>
-          <span>market_segment: </span>
-          <span>distribution_channel: </span>
-          <span>previous_cancellations: </span>
-          <span>previous_bookings_not_canceled: </span>
-          <span>reserved_room_type: </span>
-          <span>booking_changes: </span>
-          <span>agent: </span>
-          <span>company: </span>
-          <span>days_in_waiting_list: </span>
-          <span>customer_type: </span>
-          <span>adr: </span>
-          <span>required_car_parking_spaces: </span>
-          <span>total_of_special_requests: </span>
+          <p *ngIf="isCanceled"><span class="bold">is_canceled</span><span>: 1 = бронирование отменено, 0 = не отменено (обязательное)</span></p>
+          <p><span class="bold">booking_id</span><span>: уникальный идентификатор бронирования (обязательное)</span></p>
+          <p><span class="bold">lead_time</span><span>: количество дней между бронированием и заездом (обязательное)</span></p>
+          <p><span class="bold">arrival_date_year</span><span>: год планируемого заселения (обязательное)</span></p>
+          <p><span class="bold">arrival_date_month</span><span>: месяц планируемого заселения (обязательное)</span></p>
+          <p><span class="bold">arrival_date_week_number</span><span>: номер недели планируемого заселения</span></p>
+          <p><span class="bold">arrival_date_day_of_month</span><span>: день планируемого заселения (обязательное)</span></p>
+          <p><span class="bold">stays_in_weekend_nights</span><span>: количество забронированных ночей в выходные дни (обязательное)</span></p>
+          <p><span class="bold">stays_in_week_nights</span><span>: количество забронированных ночей в будние дни (обязательное)</span></p>
+          <p><span class="bold">adults</span><span>: количество взрослых проживающих</span></p>
+          <p><span class="bold">children</span><span>: количество детей</span></p>
+          <p><span class="bold">babies</span><span>: количество младенцев</span></p>
+          <p><span class="bold">meal</span><span>: тип питания</span></p>
+          <p><span class="bold">country</span><span>: страна проживания клиента</span></p>
+          <p><span class="bold">market_segment</span><span>: сегмент рынка</span></p>
+          <p><span class="bold">distribution_channel</span><span>: канал, через который было совершено бронирование</span></p>
+          <p><span class="bold">previous_cancellations</span><span>: количество предыдущих отмен</span></p>
+          <p><span class="bold">previous_bookings_not_canceled</span><span>: количество ранее не отмененных броней</span></p>
+          <p><span class="bold">reserved_room_type</span><span>: тип номера, забронированный клиентом</span></p>
+          <p><span class="bold">booking_changes</span><span>: количество изменений в бронировании</span></p>
+          <p><span class="bold">agent</span><span>: турагенство</span></p>
+          <p><span class="bold">company</span><span>: идентификатор компании, совершающей бронирование</span></p>
+          <p><span class="bold">days_in_waiting_list</span><span>: количество дней в листе ожидания до оформления брони</span></p>
+          <p><span class="bold">customer_type</span><span>: тип клиента</span></p>
+          <p><span class="bold">adr</span><span>: средняя стоимость проживания за сутки</span></p>
+          <p><span class="bold">required_car_parking_spaces</span><span>: количество необходимых парковочных мест</span></p>
+          <p><span class="bold">total_of_special_requests</span><span>: количество дополнительных запросов</span></p>
+          <p *ngIf="isAdd"><span class="bold">add_info</span><span>: дополнительная информация для дальнейшего отображения</span></p>
         </div>
       </div>
     </div>

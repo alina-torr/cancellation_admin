@@ -1,13 +1,10 @@
 package entities
 
+import "time"
+
 type Hotel struct {
 	Id int `db:"id"`
 	HotelFields
-}
-
-type Room struct {
-	Id int `db:"id"`
-	RoomFields
 }
 
 type HotelFields struct {
@@ -16,7 +13,14 @@ type HotelFields struct {
 	City    string `db:"city"`
 }
 
-type RoomFields struct {
-	Hotel_id int     `db:"hotel_id"`
-	Price    float32 `db:"price"`
+type HotelInfo struct {
+	ApiKey            string    `db:"api_key"`
+	LastUpdatePredict time.Time `db:"last_update_predict"`
+	LastUpdateTrain   time.Time `db:"last_update_train"`
+}
+
+type HotelDB struct {
+	Id int `db:"id"`
+	HotelFields
+	HotelInfo
 }
