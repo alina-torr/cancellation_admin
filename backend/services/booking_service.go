@@ -2,34 +2,22 @@ package services
 
 import (
 	ent "booking/entities"
-	"os"
-
-	// rep "booking/repositories"
+	mlgrpc "booking/ml/grpc"
 	"fmt"
-	// "sort"
+	"github.com/thoas/go-funk"
+	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	// "fmt"
-	// "os"
-	// "os/exec"
-	// "time"
-	mlgrpc "booking/ml/grpc"
-
-	"github.com/thoas/go-funk"
-	// "github.com/mitchellh/mapstructure"
-	// "github.com/thoas/go-funk"
 )
 
 type bookingRepository interface {
-	// Create(booking ent.BookingFields) (int64, error)
-	// CreateBookings(bs []ent.BookingFields) error
 	GetAllForManager(managerId int64) ([]ent.BookingTable, error)
-	// GetDistributionChannel(managerId int64) ([]rep.CountStatictic, error)
 	SaveBookingPredictions(booking []ent.BookingFields, predictions []float32, hotelId int64) error
 	GetPredictions(bs []ent.BookingFields, hotelId int64) ([]float32, error)
 	TrainModel(bookings []ent.BookingFields, cancellations []int64, hotelId int64) error
+	GetApiKey(hotelId int64) string
+	GetUserByApiKey(apiKey string) (int64, error)
 }
 
 type BookingService struct {
@@ -43,18 +31,6 @@ func NewBookingService(bRepository bookingRepository, uRepository userRepository
 		userRepository:    uRepository,
 	}
 }
-
-// func (bs BookingService) Create(w ent.BookingFields) (int64, error) {
-// 	return bs.bookingRepository.Create(w)
-// }
-
-// func (bs BookingService) GetAllForManager(managerId int64) ([]ent.Booking, error) {
-// 	return bs.bookingRepository.GetAllForManager(managerId)
-// }
-
-// func (bs BookingService) GetDistributionChannel(managerId int64) ([]rep.CountStatictic, error) {
-// 	return bs.bookingRepository.GetDistributionChannel(managerId)
-// }
 
 func (bs BookingService) GetPredicts(bookings []*mlgrpc.Booking) {
 	res := mlgrpc.BookingPredictRequest{
@@ -113,12 +89,20 @@ func (bs BookingService) getDateByString(b string) time.Time {
 }
 
 func (bs BookingService) TrainModel(bookings []ent.BookingFields, ys []int64, managerId int64) error {
-	fmt.Println("service train")
 	m, err := bs.userRepository.GetManagerById(managerId)
 	if err != nil {
 		return err
 	}
 	return bs.bookingRepository.TrainModel(bookings, ys, m.HotelId)
+}
+
+func (bs BookingService) GetApiKey(managerId int64) string {
+	m, _ := bs.userRepository.GetManagerById(managerId)
+	return bs.bookingRepository.GetApiKey(m.HotelId)
+}
+
+func (bs BookingService) GetUserByApiKey(apiKey string) (int64, error) {
+	return bs.bookingRepository.GetUserByApiKey(apiKey)
 }
 
 func (bs BookingService) GetFutureBookings(managerId int64) (futureBookings []ent.BookingTable, err error) {
@@ -134,11 +118,6 @@ func (bs BookingService) GetFutureBookings(managerId int64) (futureBookings []en
 	for i, b := range bookings {
 		arrivalDate := arrivalDates[i]
 		isAfter := arrivalDate.Compare(time.Now())
-		// if isAfter == -1 || isAfter == 0 {
-		// 	prevBookings = append(prevBookings, b)
-		// } else {
-		// 	futureBookings = append(futureBookings, b)
-		// }
 		if isAfter != -1 && isAfter != 0 {
 			futureBookings = append(futureBookings, b)
 		}

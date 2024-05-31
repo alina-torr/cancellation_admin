@@ -40,6 +40,7 @@ func main() {
 
 	r.POST("/login", userHandler.LoginHandler())
 	r.POST("/register", userHandler.RegisterHandler())
+	r.POST("/prediction", bookingHandler.GetPredict())
 
 	api := r.Group("/api")
 	api.Use(middleware.TokenAuthMiddleware(*userService))
@@ -47,7 +48,6 @@ func main() {
 	api.POST("/upload_data", bookingHandler.UploadBookingFile())
 	api.POST("/upload_data_predictions", bookingHandler.UploadBookingPredictionFile())
 	api.GET("/get_predictions", bookingHandler.GetPredictionsBooking())
-	api.POST("/prediction", bookingHandler.GetPredict())
 
 	runSQL("../db/init.sql", dbpool)
 

@@ -17,6 +17,7 @@ import { ApiUrl } from 'src/config';
 })
 export class MainPageComponent implements OnInit {
   onlyLoadForModel: boolean | undefined;
+  apiKey: string | undefined;
   constructor(
     private authService: AuthService,
     private bookingService: BookingService,
@@ -27,8 +28,9 @@ export class MainPageComponent implements OnInit {
     if (!this.authService.getJwtToken()) {
       this.toLogin();
     }
-    this.bookingService.getIsThereModel().subscribe((res: boolean) => {
-      this.onlyLoadForModel = !res;
+    this.bookingService.getIsThereModel().subscribe((res: { IsThereModel: boolean; ApiKey: string }) => {
+      this.onlyLoadForModel = !res.IsThereModel;
+      this.apiKey = res.ApiKey;
       if (res) this.getBookings();
     })
   }
@@ -85,7 +87,7 @@ export class MainPageComponent implements OnInit {
     this.bookingService.getBookings().subscribe((res) => {
       if (res) {
         this.tableData = new MatTableDataSource(res);
-        this.isDataReady = true;
+        this.isDataReady = res.length > 0;
         const yearSet = new Set();
         let date = new Date();
         date.setDate(date.getDate() + 365);
@@ -137,6 +139,8 @@ export class MainPageComponent implements OnInit {
         })
         this.isLoading = false;
       }
+    }, () => {
+      this.isLoading = false;
     });
   }
 

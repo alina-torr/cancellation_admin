@@ -31,3 +31,8 @@ type ManagerData struct {
 type LoginResponse struct {
 	AccessToken string `json:"access_token"`
 }
+
+type StartInfo struct {
+	IsThereModel bool
+	ApiKey       string
+}

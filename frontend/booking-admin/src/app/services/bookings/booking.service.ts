@@ -22,8 +22,8 @@ export class BookingService {
     )
   }
 
-  getIsThereModel(): Observable<boolean> {
-    return this.http.get<boolean>(`${ApiUrl}/api/is_there_model`);
+  getIsThereModel(): Observable<{ IsThereModel: boolean; ApiKey: string }> {
+    return this.http.get<{ IsThereModel: boolean; ApiKey: string }>(`${ApiUrl}/api/is_there_model`);
   }
 
 }

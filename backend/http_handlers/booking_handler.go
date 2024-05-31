@@ -4,19 +4,22 @@ import (
 	ent "booking/entities"
 	"booking/functions"
 	"fmt"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gocarina/gocsv"
 	"github.com/thoas/go-funk"
-	"net/http"
 )
 
 type bookingService interface {
 	SaveBookingPredictions(booking []ent.BookingFields, predictions []float32, managerId int64) error
 	TrainModel(bookings []ent.BookingFields, cancellations []int64, managerId int64) error
 	IsThereModel(managerId int64) bool
+	GetApiKey(managerId int64) string
 	GetPredictions(bss []ent.BookingFields, managerId int64) ([]float32, error)
 	GetPrediction(bss ent.BookingFields, managerId int64) (float32, error)
 	GetFutureBookings(managerId int64) (futureBookings []ent.BookingTable, err error)
+	GetUserByApiKey(apiKey string) (int64, error)
 }
 
 type GinBookingHandler struct {
@@ -52,8 +55,19 @@ func (uh *GinBookingHandler) IsThereModel() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		id := functions.GetUserId(c)
+		isThereModel := uh.bookingService.IsThereModel(id)
+		if isThereModel {
+			c.JSON(http.StatusOK, &ent.StartInfo{
+				IsThereModel: isThereModel,
+				ApiKey:       uh.bookingService.GetApiKey(id),
+			})
+		} else {
+			c.JSON(http.StatusOK, &ent.StartInfo{
+				IsThereModel: isThereModel,
+				ApiKey:       "",
+			})
+		}
 
-		c.JSON(http.StatusOK, uh.bookingService.IsThereModel(id))
 	}
 }
 
@@ -67,11 +81,9 @@ func (uh *GinBookingHandler) UploadBookingPredictionFile() gin.HandlerFunc {
 
 		f, _ := file.Open()
 		if err := gocsv.UnmarshalMultipartFile(&f, &bookings); err != nil {
-			fmt.Println(len(bookings))
 			handleError(c, http.StatusInternalServerError, err, false)
 
 		} else {
-			fmt.Println(len(bookings))
 			books := funk.Map(bookings, func(fb *ent.TrainBooking) ent.BookingFields {
 				return fb.BookingFields
 			}).([]ent.BookingFields)
@@ -99,17 +111,14 @@ func (uh *GinBookingHandler) UploadBookingFile() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		file, _ := c.FormFile("file")
-		fmt.Println(file.Filename)
 
 		bookings := []*ent.TrainBooking{}
 
 		f, _ := file.Open()
 		if err := gocsv.UnmarshalMultipartFile(&f, &bookings); err != nil {
-			fmt.Println(len(bookings))
 			handleError(c, http.StatusInternalServerError, err, false)
 
 		} else {
-			fmt.Println(len(bookings))
 			books := funk.Map(bookings, func(fb *ent.TrainBooking) ent.BookingFields {
 				return fb.BookingFields
 			}).([]ent.BookingFields)
@@ -118,9 +127,7 @@ func (uh *GinBookingHandler) UploadBookingFile() gin.HandlerFunc {
 			}).([]int64)
 
 			id := functions.GetUserId(c)
-			fmt.Println(id)
 			err = uh.bookingService.TrainModel(books, cans, id)
-			fmt.Println(err)
 
 			if err != nil {
 				fmt.Println(err)
@@ -135,12 +142,15 @@ func (uh *GinBookingHandler) GetPredict() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		var booking ent.BookingFields
-
+		k := c.Query("key")
 		if err := c.BindJSON(&booking); err != nil {
 			handleError(c, http.StatusBadRequest, err, false)
 			return
 		}
-		id := functions.GetUserId(c)
+		id, err := uh.bookingService.GetUserByApiKey(k)
+		if err != nil {
+			handleError(c, http.StatusInternalServerError, err, false)
+		}
 		res, err := uh.bookingService.GetPrediction(booking, id)
 		if err != nil {
 			fmt.Println(err.Error())

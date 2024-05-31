@@ -30,7 +30,6 @@ func (hr HotelRepository) Create(hotel ent.HotelFields) (int64, error) {
 	}
 	defer tx.Rollback(context.Background())
 	key, err := GenerateRandomString(48)
-	fmt.Println(key)
 	var hotelId int64
 	err = tx.QueryRow(context.Background(),
 		`INSERT INTO hotelscheme.hotel (name, country, city, api_key)

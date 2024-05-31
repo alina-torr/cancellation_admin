@@ -4,7 +4,7 @@ import (
 	ent "booking/entities"
 	mlgrpc "booking/ml/grpc"
 	"context"
-	"fmt"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/thoas/go-funk"
 	"google.golang.org/grpc"
@@ -29,7 +29,6 @@ func (br BookingRepository) SaveBookingPredictions(bookings []ent.BookingFields,
 	defer tx.Rollback(context.Background())
 
 	for i, b := range bookings {
-		// var bookingId int64
 		_, err := tx.Exec(context.Background(),
 			`INSERT INTO bookingscheme.booking (`+
 				`hotel_id, booking_id, arrival_date_year, arrival_date_month, arrival_date_day_of_month, cancel_prediction, add_info`+
@@ -94,11 +93,10 @@ func (br BookingRepository) TrainModel(bookings []ent.BookingFields, cancellatio
 		return br.BookingFieldsToMlBooking(b)
 	}).([]*mlgrpc.Booking)
 
-	res, err := client.TrainModel(context.Background(), &mlgrpc.BookingTrainRequest{Bookings: bs, IsCanceled: cancellations, HotelId: hotelId})
+	_, err = client.TrainModel(context.Background(), &mlgrpc.BookingTrainRequest{Bookings: bs, IsCanceled: cancellations, HotelId: hotelId})
 	if err != nil {
 		return err
 	}
-	fmt.Println(res)
 	return nil
 }
 
@@ -128,6 +126,26 @@ func (br BookingRepository) GetPredictions(bs []ent.BookingFields, hotelId int64
 		return make([]float32, 0), err
 	}
 	return message.Predictions, nil
+}
+
+func (br BookingRepository) GetApiKey(hotelId int64) string {
+	rows, err := br.dbpool.Query(context.Background(),
+		`SELECT * from hotelscheme.hotel h where h.id=$1;`, hotelId)
+	if err != nil {
+		return ""
+	}
+	hotel, err := pgx.CollectOneRow[ent.HotelDB](rows, pgx.RowToStructByName[ent.HotelDB])
+	return hotel.ApiKey
+}
+
+func (br BookingRepository) GetUserByApiKey(apiKey string) (int64, error) {
+	rows, err := br.dbpool.Query(context.Background(),
+		`SELECT * from hotelscheme.hotel h where h.api_key=$1;`, apiKey)
+	if err != nil {
+		return 0, err
+	}
+	hotel, err := pgx.CollectOneRow[ent.HotelDB](rows, pgx.RowToStructByName[ent.HotelDB])
+	return int64(hotel.Id), nil
 }
 
 func (br BookingRepository) BookingFieldsToMlBooking(b ent.BookingFields) *mlgrpc.Booking {
