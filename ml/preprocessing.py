@@ -21,7 +21,7 @@ def create_pipeline(bookings, predicts, hotel_id):
     CategEncoder = TE(handle_missing='return_nan')
     CategEncoderNanAsCategory = TargetEncoder()
     new_pipeline = ColumnTransformer([
-        ('imputer', SimpleImputer(missing_values=np.nan, strategy='mean', keep_empty_features=True), num_columns),
+        ('imputer', SimpleImputer(missing_values=np.nan, strategy='median', keep_empty_features=True), num_columns),
         ('categorical_', CategEncoder, category_columns),
         ('categorical', CategEncoderNanAsCategory, ["agent", "company", "meal", "country"]),
     ], remainder='passthrough')

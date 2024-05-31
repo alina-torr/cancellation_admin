@@ -77,7 +77,7 @@ func initTestData(hotelService *services.HotelService, userService *services.Use
 }
 
 func connectDB() *pgxpool.Pool {
-	url := "postgresql://postgres:harr23el@localhost:5432/booking_hotel"
+	url := "postgresql://booking_cancel:harr23el@localhost:5432/booking_hotel"
 	dbpool, err := pgxpool.New(context.Background(), url)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)

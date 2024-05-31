@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS userscheme.manager
 CREATE SCHEMA IF NOT EXISTS bookingscheme;
 CREATE TABLE IF NOT EXISTS bookingscheme.booking 
 (
-    -- id int PRIMARY KEY GENERATED ALWAYS AS IDENTITY, 
     hotel_id int not null references hotelscheme.hotel(id),
     booking_id int not null,
     cancel_prediction float4 not null,
